@@ -32,11 +32,12 @@ function App() {
 	const checkValidation = taskTitle && taskDescription;
 
 	//[todo] giannis handle remove and update.
-	const handleListElements = (event) => (id) => (name) => {
-		console.log('event >>>>', event.target.value);
-		console.log(id);
-		console.log(name);
+	const handleListElements = (id) => (name) => (event) => {
 		console.log('CLICKED');
+		console.log('event >>>>', event);
+		console.log('id >>>>>', id);
+		console.log('name >>>', name);
+
 	}
 
 	/**
@@ -57,7 +58,9 @@ function App() {
 	 * @param {array} tasks 
 	 * @return {JSX}
 	 */
-	const extractList = (tasks = []) => ( tasks.map(task => (<li key={task.id} onClick={ handleListElements(task.id)(task.name) }>{task.name}: {task.description}</li>)) )
+	const extractList = (tasks = []) => ( tasks.map(task => (
+		<li key={task.id} onClick={ handleListElements(task.id)(task.name) }>{task.name}: {task.description}</li>)
+	));
 
 	/**
 	 * Displays tasks.
@@ -92,15 +95,29 @@ function App() {
 
 	return (
 		<div className='App'>
-			Please enter a name: 
-			<input type="text" className='taskname' placeholder='task name' onChange={handleInput} />
+			Search a task: 
+			<div style={{marginBottom:"10px"}}>
+				<input type="text" className='taskname' placeholder='task name' onChange={handleInput} />
+			</div>
 
-			<form onSubmit={handleSubmit}>
-				<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
-				<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
-				<button disabled={!checkValidation}>submit</button>
-			</form>
-			
+			<h2>Add task:</h2>
+			<div style={{marginBottom:"10px"}}>
+				<form onSubmit={handleSubmit}>
+					<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
+					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
+					<button disabled={!checkValidation}>submit</button>
+				</form>
+			</div>
+
+			<h2>Update task:</h2>
+			<div style={{marginBottom:"10px"}}>
+				<form onSubmit={handleSubmit}>
+					<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
+					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
+					<button disabled={!checkValidation}>submit</button>
+				</form>
+			</div>
+
 			{constructResults()}
 		</div>
 	);
