@@ -25,20 +25,26 @@ const taskReducer = (state = initialState, action) => {
 }
 
 function App() {
+
+	// this could have been received from from a response of a server.
 	const [updateTasks, dispatch] = useReducer(taskReducer, tasks);
 	const [filtered, setFiltered] = useState([]);
 	const [taskTitle, setTaskTitle] = useState('');
 	const [taskDescription, setTaskDescription] = useState('');
+	const [enableFormUpdate, setEnableFormUpdate] = useState(false);
+
+	const [updatetTaskTitle, setUpdatetTaskTitle] = useState('');
+	const [updateTaskDescription, setUpdateTaskDescription] = useState('');
+	const checkUpdateValidation = updatetTaskTitle && updateTaskDescription;
+
+
 	const checkValidation = taskTitle && taskDescription;
 
-	//[todo] giannis handle remove and update.
-	const handleListElements = (id) => (name) => (event) => {
-		console.log('CLICKED');
-		console.log('event >>>>', event);
-		console.log('id >>>>>', id);
-		console.log('name >>>', name);
-
-	}
+	const taskStyling = {
+		textDecoration: 'underline',
+		marginLeft: '5px',
+		cursor: 'pointer'
+	};
 
 	/**
 	 * Filter tasks by input value.
@@ -52,15 +58,50 @@ function App() {
 		setFiltered(filteredTasks);
 	}
 
+	const handleUpdate = task => event => {
+
+	};
+
 	/**
 	 * Construct the list of tasks.
 	 * 
 	 * @param {array} tasks 
 	 * @return {JSX}
 	 */
-	const extractList = (tasks = []) => ( tasks.map(task => (
-		<li key={task.id} onClick={ handleListElements(task.id)(task.name) }>{task.name}: {task.description}</li>)
-	));
+	const extractList = (tasks = []) => ( tasks.map(task => {
+		return <li key={task.id}>
+			{task.name}: {task.description} 
+			<i style={taskStyling} onClick={ updateTask(task) }>edit</i>
+			
+			{/*TODO giannis check how to update task*/}
+			{enableFormUpdate && <div>
+				<form onSubmit={handleUpdate}>
+					<input type="text" className='title' placeholder='update titleName' onChange={(event) => setUpdatetTaskTitle(event.target.value)} />
+					<input type="text" className='description' placeholder='update titleDescription' onChange={(event) => setUpdateTaskDescription(event.target.value)} />
+					<button disabled={!checkUpdateValidation}>Update</button>
+				</form>
+			</div>}| 
+			<i style={taskStyling} onClick={ removeTask(task) }>remove</i>
+		</li>
+	}));
+
+	//[todo] giannis handle update.
+	const updateTask = (task) => (event) => {
+		console.log('CLICKED');
+		console.log('name >>>', task);
+		setEnableFormUpdate(true);
+	}
+
+	/**
+	 * Remove a task from the todo list.
+	 * 
+	 * @param {object} task 
+	 * @returns 
+	 */
+	const removeTask = (task) => (event) => {
+		const payload = {...task};
+		dispatch({type: ActionTypes.REMOVE_TASK, payload});
+	};
 
 	/**
 	 * Displays tasks.
@@ -85,11 +126,8 @@ function App() {
 		// todo submit tasks
 		event.preventDefault();
 		if (checkValidation) {
-			let payload = {id: uuidv4(), name: taskTitle, description: taskDescription};
-			dispatch({
-				'type': ActionTypes.ADD_TASK, 
-				payload
-			})
+			const payload = {id: uuidv4(), name: taskTitle, description: taskDescription};
+			dispatch({ 'type': ActionTypes.ADD_TASK, payload });
 		}
 	}
 
@@ -100,8 +138,9 @@ function App() {
 				<input type="text" className='taskname' placeholder='task name' onChange={handleInput} />
 			</div>
 
-			<h2>Add task:</h2>
+			
 			<div style={{marginBottom:"10px"}}>
+				<h2>Add task:</h2>
 				<form onSubmit={handleSubmit}>
 					<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
 					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
@@ -109,14 +148,15 @@ function App() {
 				</form>
 			</div>
 
-			<h2>Update task:</h2>
-			<div style={{marginBottom:"10px"}}>
-				<form onSubmit={handleSubmit}>
-					<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
+			{/* todo Giannis update and remore task */}
+			{ /*<div style={{marginBottom:"10px"}}>
+				<h2>Update task:</h2>
+				<form onSubmit={handleUpdate}>
+					<input type="text" className='title' placeholder='update titleName' onChange={(event) => setTaskTitle(event.target.value)} />
 					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
 					<button disabled={!checkValidation}>submit</button>
 				</form>
-			</div>
+			</div> */}
 
 			{constructResults()}
 		</div>
