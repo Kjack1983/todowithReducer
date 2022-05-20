@@ -1,4 +1,4 @@
-import React, {useState, useReducer} from 'react';
+import React, {useState, useReducer, useEffect} from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import tasks from './tasks';
 
@@ -17,27 +17,27 @@ const taskReducer = (state = initialState, action) => {
 		case ActionTypes.REMOVE_TASK:
 			return state.filter(task => task.id !== payload.id);
 		case ActionTypes.UPDATE_TASK:
-			const updateTask = state.filter(task => task.id === payload.id);
-			return updateTask;
+			console.log('find state from payload:', state.find(task => task.id === payload.id));
+			console.log(state.find(task => task.id === payload.id));
+			state[state.findIndex(task => task.id === payload.id)] = {...payload};
+			const newState = [...state];
+			return newState;
 		default:
 			return state;
 	}
 }
 
-function App() {
-
-	// this could have been received from from a response of a server.
+const App = () => {
 	const [updateTasks, dispatch] = useReducer(taskReducer, tasks);
 	const [filtered, setFiltered] = useState([]);
 	const [taskTitle, setTaskTitle] = useState('');
 	const [taskDescription, setTaskDescription] = useState('');
 	const [enableFormUpdate, setEnableFormUpdate] = useState(false);
+	const [taskForEditing, setTaskForEditing] = useState({});
 
 	const [updatetTaskTitle, setUpdatetTaskTitle] = useState('');
 	const [updateTaskDescription, setUpdateTaskDescription] = useState('');
 	const checkUpdateValidation = updatetTaskTitle && updateTaskDescription;
-
-
 	const checkValidation = taskTitle && taskDescription;
 
 	const taskStyling = {
@@ -54,12 +54,33 @@ function App() {
 	 */
 	const handleInput = (event) => {
 		let { target: { value } } = event;
-		const filteredTasks = updateTasks.filter(task => task.name.includes(value) || task.description.includes(value));
+		const filteredTasks = updateTasks.filter(task => Object.values(task).map(data => data).join('').includes(value));
 		setFiltered(filteredTasks);
 	}
 
-	const handleUpdate = task => event => {
+	/**
+	 * Handler update of the tasks
+	 * @param {*} event 
+	 */
+	const handleUpdate = event => {
+		event.preventDefault();
+		let payload = {...taskForEditing, name: updatetTaskTitle, description: updateTaskDescription};
+		dispatch({type:ActionTypes.UPDATE_TASK, payload});
+	};
 
+	/**
+	 * Display the updateform.
+	 * 
+	 * @returns {JSX} displayForm
+	 */
+	const displayUpdateForm = () => {
+		return (<div>
+			<form onSubmit={handleUpdate}>
+				<input type="text" className='title' placeholder='update titleName' onChange={(event) => setUpdatetTaskTitle(event.target.value)} />
+				<input type="text" className='description' placeholder='update titleDescription' onChange={(event) => setUpdateTaskDescription(event.target.value)} />
+				<button disabled={!checkUpdateValidation}>Update</button>
+			</form>
+		</div>)
 	};
 
 	/**
@@ -71,25 +92,17 @@ function App() {
 	const extractList = (tasks = []) => ( tasks.map(task => {
 		return <li key={task.id}>
 			{task.name}: {task.description} 
-			<i style={taskStyling} onClick={ updateTask(task) }>edit</i>
-			
-			{/*TODO giannis check how to update task*/}
-			{enableFormUpdate && <div>
-				<form onSubmit={handleUpdate}>
-					<input type="text" className='title' placeholder='update titleName' onChange={(event) => setUpdatetTaskTitle(event.target.value)} />
-					<input type="text" className='description' placeholder='update titleDescription' onChange={(event) => setUpdateTaskDescription(event.target.value)} />
-					<button disabled={!checkUpdateValidation}>Update</button>
-				</form>
-			</div>}| 
+			<i style={taskStyling} onClick={ updateTask(task) }>edit</i> | 
 			<i style={taskStyling} onClick={ removeTask(task) }>remove</i>
 		</li>
 	}));
 
 	//[todo] giannis handle update.
 	const updateTask = (task) => (event) => {
-		console.log('CLICKED');
-		console.log('name >>>', task);
-		setEnableFormUpdate(true);
+		if(Object.keys(task).length) {
+			setEnableFormUpdate(true);
+			setTaskForEditing(task);
+		}
 	}
 
 	/**
@@ -125,6 +138,8 @@ function App() {
 	const handleSubmit = (event) => {
 		// todo submit tasks
 		event.preventDefault();
+		setTaskForEditing({});
+		setEnableFormUpdate(false)
 		if (checkValidation) {
 			const payload = {id: uuidv4(), name: taskTitle, description: taskDescription};
 			dispatch({ 'type': ActionTypes.ADD_TASK, payload });
@@ -137,28 +152,24 @@ function App() {
 			<div style={{marginBottom:"10px"}}>
 				<input type="text" className='taskname' placeholder='task name' onChange={handleInput} />
 			</div>
-
-			
 			<div style={{marginBottom:"10px"}}>
 				<h2>Add task:</h2>
 				<form onSubmit={handleSubmit}>
-					<input type="text" className='title' placeholder='add titleName' onChange={(event) => setTaskTitle(event.target.value)} />
-					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
+					<input type="text" className='title' placeholder='add titleName' onChange={(event) => {
+						setTaskForEditing({})
+						setEnableFormUpdate(false);
+						setTaskTitle(event.target.value);
+					}} />
+					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => {
+						setTaskForEditing({});
+						setEnableFormUpdate(false);
+						setTaskDescription(event.target.value);
+					}} />
 					<button disabled={!checkValidation}>submit</button>
 				</form>
 			</div>
-
-			{/* todo Giannis update and remore task */}
-			{ /*<div style={{marginBottom:"10px"}}>
-				<h2>Update task:</h2>
-				<form onSubmit={handleUpdate}>
-					<input type="text" className='title' placeholder='update titleName' onChange={(event) => setTaskTitle(event.target.value)} />
-					<input type="text" className='description' placeholder='add titleDescription' onChange={(event) => setTaskDescription(event.target.value)} />
-					<button disabled={!checkValidation}>submit</button>
-				</form>
-			</div> */}
-
 			{constructResults()}
+			{enableFormUpdate ? displayUpdateForm() : null}
 		</div>
 	);
 }
